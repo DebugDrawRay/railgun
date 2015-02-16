@@ -5,8 +5,15 @@ public class playerMech : MonoBehaviour
 {
 	//movement vars
 	public Vector3 forwardVel;
-	public float strafeVel;
+	public float baseSpeed;
+	private float strafeVel;
 	public float recenterVel;
+
+	//dashing vars
+	private float dashFuel;
+	private float maxDashFuel;
+	private float dashRefuelRate;
+	public float fuelUseRate; 
 
 	//positioning vars
 	private int currentPosition;
@@ -14,6 +21,43 @@ public class playerMech : MonoBehaviour
 
 	private bool rightReady;
 	private bool leftReady;
+
+	//aiming vars
+	public float zAimOffset;
+
+	//weapon vars
+	public LayerMask rangedRayMask;
+	public int totalDef;
+	public bool meleeCooldown;
+
+	//inventory vars
+	public GameObject rangedWeapon;
+	public GameObject meleeWeapon;
+	public GameObject dashEngine;
+	public GameObject shield;
+
+	//bomb vars
+	public GameObject bomb;
+	private GameObject newBomb;
+	public int bombCount;
+	public int bombCountMax;
+	private bool bombSent;
+
+	//stat vars
+	public int lives;
+	public int armor;
+	public int defense;
+	public int attack;
+	public float speed;
+
+	//status vars
+	private int currentArmor;
+
+	//external tags
+	public string enemyDamageTag;
+	public string enemyCollisionTag;
+	public string enviromentCollisionTag;
+
 	//input vars
 	//"Horizontal"
 	//"Vertical"
@@ -23,13 +67,23 @@ public class playerMech : MonoBehaviour
 	//"RaiseShield"
 	//"ChangePositionLeft"
 	//"ChangePositionRight"
+	//"Dash"
+
 	private float horAxis;
 	private float verAxis;
 	private bool moveRight;
 	private bool moveLeft;
+	private bool dash;
+	private bool fireRanged;
+	private bool useMelee;
+	private bool useBomb;
+	private Vector3 mousePos;
+	private bool raiseShield;
 
+	//
+	//initialization
+	//
 
-	// Use this for initialization
 	void Start () 
 	{
 		railMovement();
@@ -38,17 +92,57 @@ public class playerMech : MonoBehaviour
 	}
 	void varInit()
 	{
+		//positioning
 		rightReady = true;
 		leftReady = true;
+
+		//movement
+		strafeVel = speed + baseSpeed;
+
+		//weapons/shields
+		totalDef = defense;
+		meleeCooldown = true;
+		bombSent = false;
+
+		//dashing
+		dashRefuelRate = dashEngine.GetComponent<equipmentProperties>().refuelRate;
+		maxDashFuel = dashEngine.GetComponent<equipmentProperties>().maxFuel;
+		dashFuel = maxDashFuel;
+
+		//status
+		currentArmor = armor;
 	}
 	
-	// Update is called once per frame
+
+	//
+	//main loop
+	//
+
 	void Update () 
 	{
 		playerMovement();
 		playerRecentering();
+		playerAiming();
+		weaponControl();
 		inputListener();
+
+		checkStatus();
 	}
+
+	//check status, runs functions on status change
+	void checkStatus()
+	{
+		if(currentArmor <= 0)
+		{
+			deathEvent();
+		}
+	}
+
+	void deathEvent()
+	{
+		
+	}
+
 	//input control
 	void inputListener()
 	{
@@ -56,6 +150,13 @@ public class playerMech : MonoBehaviour
 		verAxis = Input.GetAxisRaw("Vertical");
 		moveRight = Input.GetButtonDown("ChangePositionRight");
 		moveLeft = Input.GetButtonDown("ChangePositionLeft");
+		dash = Input.GetButton("Dash");
+		fireRanged = Input.GetButtonDown("UseRangedWeapon");
+		mousePos = Input.mousePosition;
+		mousePos.z = zAimOffset;
+		raiseShield = Input.GetButton("RaiseShield");
+		useMelee = Input.GetButtonDown("UseMeleeWeapon");
+		useBomb = Input.GetButtonDown("UseBomb");
 	}
 
 	//movement control
@@ -89,6 +190,26 @@ public class playerMech : MonoBehaviour
 		{
 			leftReady = true;;
 		}
+
+		//dashing
+		if(dash && dashFuel > 0)
+		{
+			strafeVel = speed + (baseSpeed * dashEngine.GetComponent<equipmentProperties>().dashMulti);
+			dashFuel -= fuelUseRate;
+			Debug.Log("dashing");
+		}
+		if(!dash || dashFuel <= 0)
+		{
+			if (dashFuel >= maxDashFuel)
+			{
+				dashFuel = maxDashFuel;
+			}
+			else
+			{
+				dashFuel += dashRefuelRate;
+			}
+			strafeVel = speed + baseSpeed;
+		}
 	}
 
 	void playerRepositioning(int amount)
@@ -120,5 +241,100 @@ public class playerMech : MonoBehaviour
 		Vector3 recenterDirection = screenCenter - transform.position;
 		recenterDirection.z = 0;
 		rigidbody.AddForce(recenterDirection * recenterVel);
+	}
+
+	//aiming and weapon control
+	void playerAiming()
+	{
+		transform.LookAt(Camera.main.ScreenToWorldPoint(mousePos));
+	}
+
+	void weaponControl()
+	{
+		//ranged
+		if (fireRanged && !raiseShield)
+		{
+			Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+			RaycastHit hit;
+
+			GameObject proj = Instantiate(rangedWeapon, transform.position, Quaternion.identity) as GameObject;
+			proj.GetComponent<equipmentProperties>().inheritedDamage = attack;
+
+			if(Physics.Raycast(ray, out hit, Mathf.Infinity, rangedRayMask))
+			{
+				proj.transform.LookAt(hit.point);
+			}
+			else
+			{
+				proj.transform.rotation = transform.rotation;
+			}
+		}
+
+		//melee
+		if (useMelee && !raiseShield && meleeCooldown)
+		{
+			GameObject weapon = Instantiate(meleeWeapon, transform.forward, Quaternion.identity) as GameObject;
+			weapon.GetComponent<equipmentProperties>().inheritedDamage = attack;
+			meleeCooldown = false;
+		}
+
+		//defense
+		if(raiseShield)
+		{
+			totalDef = defense * shield.GetComponent<equipmentProperties>().defenseIncrease;
+		}
+		if(!raiseShield)
+		{
+			totalDef = defense;
+		}
+
+		//bomb	
+		if (useBomb)
+		{
+			if (!bombSent)
+			{
+				if(bombCount > 0)
+				{
+					newBomb = Instantiate(bomb, transform.position, Quaternion.identity) as GameObject;
+					bombCount -= 1;
+					Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+					RaycastHit hit;
+					
+					if(Physics.Raycast(ray, out hit, Mathf.Infinity, rangedRayMask))
+					{
+						newBomb.transform.LookAt(hit.point);
+					}
+					else
+					{
+						newBomb.transform.rotation = transform.rotation;
+					}
+					bombSent = true;
+				}
+			}
+
+			else if (bombSent)
+			{
+				newBomb.GetComponent<bombProperties>().explodeThis();
+				bombSent = false;
+			}
+		}
+	}
+
+	//
+	//collision handling
+	//
+
+	void OnTriggerEnter(Collider other)
+	{
+		if (other.gameObject.tag == enemyDamageTag)
+		{
+			takeDamage(other.gameObject.GetComponent<equipmentProperties>().damageValue);
+			Destroy(other.gameObject);
+		}
+	}
+
+	void takeDamage(int amount)
+	{
+		currentArmor -= amount;
 	}
 }
