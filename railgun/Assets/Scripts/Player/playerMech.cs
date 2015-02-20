@@ -43,7 +43,7 @@ public class playerMech : MonoBehaviour
 	public int bombCountMax;
 	private bool bombSent;
 
-	//stat vars
+	//attribute vars
 	public int lives;
 	public int armor;
 	public int defense;
@@ -89,6 +89,8 @@ public class playerMech : MonoBehaviour
 		railMovement();
 		playerRepositioning(0);
 		varInit();
+
+		Screen.showCursor = false;
 	}
 	void varInit()
 	{
@@ -337,4 +339,24 @@ public class playerMech : MonoBehaviour
 	{
 		currentArmor -= amount;
 	}
+
+	//
+	//send values
+	//
+
+	public float getAttribute(string target)
+	{
+		if(target == "armor")
+		{
+			return currentArmor;
+		}
+		if(target == "dashFuel")
+		{
+			return dashFuel;
+		}
+		return 0;
+	}
+
 }
+
+

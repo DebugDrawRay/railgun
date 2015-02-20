@@ -47,14 +47,22 @@
   </ItemGroup>
   <ItemGroup>
      <Compile Include="Assets\Scripts\CameraControl\cameraFollow.cs" />
-     <Compile Include="Assets\Scripts\bombProperties.cs" />
-     <Compile Include="Assets\Scripts\dashEngineProperties.cs" />
-     <Compile Include="Assets\Scripts\equipmentProperties.cs" />
-     <Compile Include="Assets\Scripts\explosionProperties.cs" />
-     <Compile Include="Assets\Scripts\meleeWeaponProperties.cs" />
-     <Compile Include="Assets\Scripts\playerMech.cs" />
-     <Compile Include="Assets\Scripts\rangedWeaponProperties.cs" />
-     <Compile Include="Assets\Scripts\shieldProperties.cs" />
+     <Compile Include="Assets\Scripts\Enemy\basicFlyer.cs" />
+     <Compile Include="Assets\Scripts\Enemy\enemyGroup.cs" />
+     <Compile Include="Assets\Scripts\Enemy\enemyProperties.cs" />
+     <Compile Include="Assets\Scripts\Enemy\waveTrigger.cs" />
+     <Compile Include="Assets\Scripts\Equipment\bombProperties.cs" />
+     <Compile Include="Assets\Scripts\Equipment\dashEngineProperties.cs" />
+     <Compile Include="Assets\Scripts\Equipment\equipmentProperties.cs" />
+     <Compile Include="Assets\Scripts\Equipment\explosionProperties.cs" />
+     <Compile Include="Assets\Scripts\Equipment\meleeWeaponProperties.cs" />
+     <Compile Include="Assets\Scripts\Equipment\rangedWeaponProperties.cs" />
+     <Compile Include="Assets\Scripts\Equipment\shieldProperties.cs" />
+     <Compile Include="Assets\Scripts\Player\playerMech.cs" />
+     <Compile Include="Assets\Scripts\UI\statusBar.cs" />
+     <Compile Include="Assets\Scripts\UI\subTargetRet.cs" />
+     <Compile Include="Assets\Scripts\UI\targetingRet.cs" />
+     <Compile Include="Assets\Scripts\UI\targetingRetOuter.cs" />
  <Reference Include="UnityEngine.UI">
  <HintPath>C:/Program Files (x86)/Unity/Editor/Data/UnityExtensions/Unity/GUISystem/4.6.1/UnityEngine.UI.dll</HintPath>
  </Reference>
